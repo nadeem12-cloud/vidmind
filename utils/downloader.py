@@ -14,7 +14,7 @@ except ImportError:
     raise ImportError("yt-dlp not installed. Run: pip install yt-dlp")
 
 
-def download_audio(url: str, output_dir: str) -> tuple[str, str, float]:
+def download_audio(url: str, output_dir: str, cookies_path: str = None) -> tuple[str, str, float]:
     """
     Download the best available audio track from a YouTube URL.
 
@@ -28,6 +28,9 @@ def download_audio(url: str, output_dir: str) -> tuple[str, str, float]:
 
     # Probe metadata first (fast, no download)
     meta_opts = {"quiet": True, "no_warnings": True, "skip_download": True}
+    if cookies_path:
+        meta_opts["cookiefile"] = cookies_path
+
     with yt_dlp.YoutubeDL(meta_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         title = info.get("title", "Unknown Video")
@@ -51,6 +54,8 @@ def download_audio(url: str, output_dir: str) -> tuple[str, str, float]:
         # Do NOT post-process — avoids any ffmpeg dependency
         "postprocessors": [],
     }
+    if cookies_path:
+        ydl_opts["cookiefile"] = cookies_path
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([url])

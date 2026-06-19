@@ -204,10 +204,21 @@ if not groq_key:
     st.code('GROQ_API_KEY = "gsk_..."', language="toml")
     st.stop()
 
-# ── Input — NO wrapping div, just raw Streamlit elements ─────────────────────
-# Custom label rendered as HTML above the input (not inside it — avoids ghost box)
 st.markdown('<div class="input-card"><div class="input-lbl">🔗 YouTube URL</div>', unsafe_allow_html=True)
 url = st.text_input("url_field", placeholder="https://www.youtube.com/watch?v=...", label_visibility="collapsed")
+
+# Expander for bypass tools
+with st.expander("🔧 Cloud deployment? Avoid YouTube blocks (403 errors)"):
+    st.markdown("""
+    When running in the cloud (like Streamlit Community Cloud), YouTube often blocks the server's IP address and returns a **403 Forbidden** error.
+    
+    **How to bypass this:**
+    1. Install a browser extension like **Get cookies.txt LOCALLY** (Chrome/Edge) or **cookies.txt** (Firefox).
+    2. Go to YouTube, log in, and export cookies as a text file.
+    3. Upload the exported `cookies.txt` file below.
+    """)
+    cookie_file = st.file_uploader("Upload cookies.txt file", type=["txt"], key="cookie_file", label_visibility="collapsed")
+
 col1, col2 = st.columns([4, 1])
 with col1:
     analyze_btn = st.button("▶  Analyze Video", use_container_width=True)
@@ -247,8 +258,25 @@ if analyze_btn and url:
 
         render_chips("download")
         try:
-            with st.spinner("Fetching audio from YouTube..."):
-                audio_path, video_title, duration = download_audio(url, tmpdir)
+            cookies_path = None
+            if cookie_file is not None:
+                # Save the uploaded file temporarily so yt-dlp can access it via path
+                temp_cookie = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
+                temp_cookie.write(cookie_file.getvalue())
+                temp_cookie.close()
+                cookies_path = temp_cookie.name
+
+            try:
+                with st.spinner("Fetching audio from YouTube..."):
+                    audio_path, video_title, duration = download_audio(url, tmpdir, cookies_path=cookies_path)
+            finally:
+                # Always clean up the temporary cookie file if created
+                if cookies_path and os.path.exists(cookies_path):
+                    try:
+                        os.remove(cookies_path)
+                    except Exception:
+                        pass
+
             done.append("download")
             render_chips("transcribe")
             st.success(f"✓  **{video_title}** · {format_duration(duration)}")
