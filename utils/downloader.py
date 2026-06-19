@@ -27,7 +27,7 @@ def download_audio(url: str, output_dir: str, cookies_path: str = None) -> tuple
     output_dir = str(output_dir)
 
     # Probe metadata first (fast, no download)
-    meta_opts = {"quiet": True, "no_warnings": True, "skip_download": True}
+    meta_opts = {"quiet": False, "verbose": True, "no_warnings": False, "skip_download": True}
     if cookies_path:
         meta_opts["cookiefile"] = cookies_path
 
@@ -46,10 +46,11 @@ def download_audio(url: str, output_dir: str, cookies_path: str = None) -> tuple
     # Download audio — prefer m4a (AAC) so no re-encoding is needed.
     # yt-dlp can extract it from the muxed stream without ffmpeg.
     ydl_opts = {
-        "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio",
+        "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
         "outtmpl": os.path.join(output_dir, "%(id)s.%(ext)s"),
-        "quiet": True,
-        "no_warnings": True,
+        "quiet": False,
+        "verbose": True,
+        "no_warnings": False,
         "noplaylist": True,
         # Do NOT post-process — avoids any ffmpeg dependency
         "postprocessors": [],
