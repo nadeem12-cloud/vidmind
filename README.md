@@ -9,7 +9,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 
-[**Live Demo →**](https://vidmind.streamlit.app) &nbsp;·&nbsp; [Report Bug](https://github.com/nadeem12-cloud/vidmind/issues) &nbsp;·&nbsp; [Request Feature](https://github.com/nadeem12-cloud/vidmind/issues)
+[**Live Demo →**](https://vidmind-10.streamlit.app/) &nbsp;·&nbsp; [Report Bug](https://github.com/nadeem12-cloud/vidmind/issues) &nbsp;·&nbsp; [Request Feature](https://github.com/nadeem12-cloud/vidmind/issues)
 
 ![VidMind Screenshot](assets/screenshot.png)
 
