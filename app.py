@@ -2,6 +2,12 @@ import streamlit as st
 import os
 import tempfile
 from pathlib import Path
+import re
+
+def get_youtube_id(url: str) -> str | None:
+    pattern = r'(?:https?://)?(?:www\.)?(?:youtube\.com/(?:[^/\n\s]+/\S+/|(?:v|e(?:mbed)?)/|\S*?[?&]v=)|youtu\.be/)([a-zA-Z0-9_-]{11})'
+    match = re.search(pattern, url)
+    return match.group(1) if match else None
 
 from utils.downloader import download_audio
 from utils.gemini_client import transcribe_audio, generate_summaries
@@ -193,7 +199,7 @@ st.markdown("""
 <div class="hero">
   <div class="badge"><span class="badge-dot"></span>Groq Whisper · LLaMA 3.3 · 100% Free</div>
   <h1 class="hero-title">Turn any video into<br>instant clarity</h1>
-  <p class="hero-sub">Paste a YouTube URL — get a structured summary, key points, and full transcript in seconds.</p>
+  <p class="hero-sub"><center>Paste a YouTube URL — get a structured summary, key points, and full transcript in seconds.</center></p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -252,6 +258,15 @@ if analyze_btn and url:
             done.append("download")
             render_chips("transcribe")
             st.success(f"✓  **{video_title}** · {format_duration(duration)}")
+            
+            # Show YouTube video thumbnail
+            video_id = get_youtube_id(url)
+            if video_id:
+                st.markdown(f"""
+                <div style="text-align: center; margin: 0.8rem 0 1.4rem;">
+                    <img src="https://img.youtube.com/vi/{video_id}/mqdefault.jpg" style="border-radius: 14px; width: 100%; max-width: 440px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); border: 1.5px solid rgba(255,254,172,0.25);">
+                </div>
+                """, unsafe_allow_html=True)
         except Exception as e:
             st.error(f"**Download failed:** {e}")
             st.stop()
@@ -303,7 +318,19 @@ if analyze_btn and url:
         copy_btn(results["detailed"])
 
     with tab3:
-        bullets_html = "<ul>" + "".join(f"<li>{b}</li>" for b in results["bullets"]) + "</ul>"
+        bullets_html = "<ul>"
+        for b in results["bullets"]:
+            if ":" in b:
+                parts = b.split(":", 1)
+                formatted_bullet = f"<strong>{parts[0]}:</strong>{parts[1]}"
+            else:
+                words = b.split()
+                if len(words) > 3:
+                    formatted_bullet = f"<strong>{' '.join(words[:3])}</strong> {' '.join(words[3:])}"
+                else:
+                    formatted_bullet = f"<strong>{b}</strong>"
+            bullets_html += f"<li>{formatted_bullet}</li>"
+        bullets_html += "</ul>"
         st.markdown(f'<div class="out-card">{bullets_html}</div>', unsafe_allow_html=True)
         copy_btn("\n".join(f"• {b}" for b in results["bullets"]))
 
@@ -315,6 +342,35 @@ if analyze_btn and url:
             unsafe_allow_html=True
         )
         copy_btn(transcript)
+
+    # ── Export/Download Summary ───────────────────────────────────────────────
+    st.markdown("<br>", unsafe_allow_html=True)
+    summary_md = f"""# 🎬 VidMind Summary: {video_title}
+**Original Video:** {url}
+**Duration:** {format_duration(duration)}
+
+---
+
+## ⚡ Quick Summary
+{results["short"]}
+
+---
+
+## 📖 Detailed Summary
+{results["detailed"]}
+
+---
+
+## 🎯 Key Points
+{chr(10).join(f"- {b}" for b in results["bullets"])}
+"""
+    st.download_button(
+        label="📥 Download Markdown Summary",
+        data=summary_md,
+        file_name=f"{video_title.replace(' ', '_')}_summary.md",
+        mime="text/markdown",
+        use_container_width=True,
+    )
 
 elif analyze_btn and not url:
     st.warning("Paste a YouTube URL first.")
