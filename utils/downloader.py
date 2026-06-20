@@ -2,14 +2,12 @@
 downloader.py — Download audio from YouTube using yt-dlp.
 Returns (audio_path, video_title, duration_seconds).
 
-IMPORTANT (2026): YouTube blocks datacenter/cloud IPs (Streamlit Cloud, AWS,
-etc.) from the standard player API — returns "only images available" or
-403 Forbidden on download. The reliable fix is to pass YouTube cookies
-(exported from a logged-in browser session) so requests look like they're
-coming from a real authenticated user, not a bot.
-
-cookies_path is optional — if not provided, falls back to multi-client
-emulation (works for some videos, not all, on cloud IPs).
+2026 YouTube blocking notes:
+- Cloud/datacenter IPs get throttled to image-only or restricted formats.
+- Fix #1: try multiple player clients (android_vr, ios, android, tv, web).
+- Fix #2: use cookies.txt from a real logged-in session (strongly recommended).
+- Fix #3: loosen format selector — DASH-only videos need 'bv*+ba/b' style
+  selectors, not a hardcoded ext list, or every client fails identically.
 """
 
 import os
@@ -24,15 +22,25 @@ except ImportError:
 
 PLAYER_CLIENTS = ["android_vr", "ios", "android", "tv", "web"]
 
+# Ordered from most-specific to most-permissive. The final 'best' with no
+# filters at all is the ultimate catch-all — if even that fails, the video
+# is genuinely inaccessible (private/geo-blocked/age-gated).
+FORMAT_SELECTORS = [
+    "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio",
+    "bestaudio/best",
+    "worstaudio/worst",
+    "best",
+]
+
 
 def _base_opts(output_dir: str, cookies_path: str | None) -> dict:
     opts = {
-        "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
         "outtmpl": os.path.join(output_dir, "%(id)s.%(ext)s"),
         "quiet": True,
         "no_warnings": True,
         "noplaylist": True,
         "postprocessors": [],
+        "ignoreerrors": False,
         "http_headers": {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -45,8 +53,9 @@ def _base_opts(output_dir: str, cookies_path: str | None) -> dict:
     return opts
 
 
-def _try_download(url: str, output_dir: str, client: str, cookies_path: str | None):
+def _try_download(url: str, output_dir: str, client: str, fmt: str, cookies_path: str | None):
     opts = _base_opts(output_dir, cookies_path)
+    opts["format"] = fmt
     opts["extractor_args"] = {"youtube": {"player_client": [client]}}
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -63,21 +72,9 @@ def download_audio(
 ) -> tuple[str, str, float]:
     """
     Download the best available audio track from a YouTube URL.
-
-    Parameters
-    ----------
-    url          : YouTube video URL
-    output_dir   : where to save the audio file
-    cookies_path : optional path to a cookies.txt file (Netscape format).
-                   Strongly recommended when running on cloud platforms
-                   (Streamlit Cloud, etc.) — bypasses YouTube's IP-based
-                   bot detection that otherwise causes 403 / format errors.
-
-    Returns
-    -------
-    audio_path : str   — path to the downloaded audio file
-    title      : str   — video title
-    duration   : float — video duration in seconds
+    Tries every combination of (player_client × format_selector) until
+    one succeeds — this is the most resilient approach against YouTube's
+    2026-era cloud-IP blocking and inconsistent format availability.
     """
     output_dir = str(output_dir)
 
@@ -111,23 +108,31 @@ def download_audio(
             "For free-tier usage, please use videos under 3 hours."
         )
 
-    # ── Download — try each client until one succeeds ──────────────────────
-    audio_exts = {".m4a", ".webm", ".mp4", ".ogg", ".opus", ".aac", ".mp3"}
-    for client in PLAYER_CLIENTS:
-        if _try_download(url, output_dir, client, cookies_path):
-            candidates = glob.glob(os.path.join(output_dir, "*.*"))
-            audio_files = [f for f in candidates if Path(f).suffix.lower() in audio_exts]
-            if audio_files:
-                audio_path = max(audio_files, key=os.path.getsize)
-                return audio_path, title, float(duration)
+    # ── Download — try every (client, format) combo ────────────────────────
+    audio_exts = {".m4a", ".webm", ".mp4", ".ogg", ".opus", ".aac", ".mp3", ".m4b"}
+    video_exts = {".mp4", ".webm", ".mkv"}  # fallback: extract audio track from video container
 
-    # ── All clients failed ───────────────────────────────────────────────────
+    for fmt in FORMAT_SELECTORS:
+        for client in PLAYER_CLIENTS:
+            if _try_download(url, output_dir, client, fmt, cookies_path):
+                candidates = glob.glob(os.path.join(output_dir, "*.*"))
+                media_files = [
+                    f for f in candidates
+                    if Path(f).suffix.lower() in (audio_exts | video_exts)
+                ]
+                if media_files:
+                    audio_path = max(media_files, key=os.path.getsize)
+                    return audio_path, title, float(duration)
+
+    # ── Everything failed ────────────────────────────────────────────────────
     if cookies_path:
         raise FileNotFoundError(
-            "Download failed even with cookies. The cookies may have expired — "
-            "export a fresh cookies.txt from your browser and try again."
+            "Download failed even with cookies, across all formats and clients. "
+            "The cookies may have expired — export a fresh cookies.txt and retry. "
+            "If that still fails, the video may be DRM-protected or region-locked."
         )
     raise FileNotFoundError(
-        "YouTube is blocking this server's IP (common on cloud platforms). "
-        "Upload a cookies.txt file using the panel above to fix this."
+        "YouTube is blocking this server's IP across all known workarounds. "
+        "Upload a cookies.txt file using the panel above — this is required "
+        "for most cloud deployments in 2026."
     )
