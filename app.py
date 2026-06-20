@@ -193,7 +193,7 @@ st.markdown("""
 <div class="hero">
   <div class="badge"><span class="badge-dot"></span>Groq Whisper · LLaMA 3.3 · 100% Free</div>
   <h1 class="hero-title">Turn any video into<br>instant clarity</h1>
-  <p class="hero-sub"><center>Paste a YouTube URL — get a structured summary, key points, and full transcript in seconds.</center></p>
+  <p class="hero-sub">Paste a YouTube URL — get a structured summary, key points, and full transcript in seconds.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -204,21 +204,10 @@ if not groq_key:
     st.code('GROQ_API_KEY = "gsk_..."', language="toml")
     st.stop()
 
+# ── Input — NO wrapping div, just raw Streamlit elements ─────────────────────
+# Custom label rendered as HTML above the input (not inside it — avoids ghost box)
 st.markdown('<div class="input-card"><div class="input-lbl">🔗 YouTube URL</div>', unsafe_allow_html=True)
 url = st.text_input("url_field", placeholder="https://www.youtube.com/watch?v=...", label_visibility="collapsed")
-
-# Expander for bypass tools
-with st.expander("🔧 Cloud deployment? Avoid YouTube blocks (403 errors)"):
-    st.markdown("""
-    When running in the cloud (like Streamlit Community Cloud), YouTube often blocks the server's IP address and returns a **403 Forbidden** error.
-    
-    **How to bypass this:**
-    1. Install a browser extension like **Get cookies.txt LOCALLY** (Chrome/Edge) or **cookies.txt** (Firefox).
-    2. Go to YouTube, log in, and export cookies as a text file.
-    3. Upload the exported `cookies.txt` file below.
-    """)
-    cookie_file = st.file_uploader("Upload cookies.txt file", type=["txt"], key="cookie_file", label_visibility="collapsed")
-
 col1, col2 = st.columns([4, 1])
 with col1:
     analyze_btn = st.button("▶  Analyze Video", use_container_width=True)
@@ -227,6 +216,24 @@ with col2:
         st.session_state.clear()
         st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
+
+# ── Cookies upload — fixes YouTube blocking cloud server IPs ─────────────────
+with st.expander("🍪  Cloud deployment? Avoid YouTube blocks (403 errors)"):
+    st.markdown("""
+When running in the cloud (like Streamlit Community Cloud), YouTube often blocks the server's IP address and returns a **403 Forbidden** error.
+
+**How to bypass this:**
+1. Install a browser extension like **Get cookies.txt LOCALLY** (Chrome/Edge) or **cookies.txt** (Firefox).
+2. Go to YouTube, log in, and export cookies as a text file.
+3. Upload the exported `cookies.txt` file below.
+""")
+    cookies_file = st.file_uploader("Upload cookies.txt", type=["txt"], label_visibility="collapsed")
+
+cookies_path = None
+if cookies_file is not None:
+    cookies_path = os.path.join(tempfile.gettempdir(), "vidmind_cookies.txt")
+    with open(cookies_path, "wb") as f:
+        f.write(cookies_file.getvalue())
 
 # ── Processing ────────────────────────────────────────────────────────────────
 if analyze_btn and url:
@@ -258,25 +265,8 @@ if analyze_btn and url:
 
         render_chips("download")
         try:
-            cookies_path = None
-            if cookie_file is not None:
-                # Save the uploaded file temporarily so yt-dlp can access it via path
-                temp_cookie = tempfile.NamedTemporaryFile(delete=False, suffix=".txt")
-                temp_cookie.write(cookie_file.getvalue())
-                temp_cookie.close()
-                cookies_path = temp_cookie.name
-
-            try:
-                with st.spinner("Fetching audio from YouTube..."):
-                    audio_path, video_title, duration = download_audio(url, tmpdir, cookies_path=cookies_path)
-            finally:
-                # Always clean up the temporary cookie file if created
-                if cookies_path and os.path.exists(cookies_path):
-                    try:
-                        os.remove(cookies_path)
-                    except Exception:
-                        pass
-
+            with st.spinner("Fetching audio from YouTube..."):
+                audio_path, video_title, duration = download_audio(url, tmpdir, cookies_path)
             done.append("download")
             render_chips("transcribe")
             st.success(f"✓  **{video_title}** · {format_duration(duration)}")
