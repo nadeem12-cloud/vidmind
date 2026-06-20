@@ -1,4 +1,4 @@
-<div align="center">
+div align="center">
 
 # 🎬 VidMind — AI Video Summarizer
 
@@ -9,7 +9,7 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![License](https://img.shields.io/badge/License-MIT-22c55e?style=flat-square)](LICENSE)
 
-[**Live Demo →**](https://vidmind-10.streamlit.app/) &nbsp;·&nbsp; [Report Bug](https://github.com/nadeem12-cloud/vidmind/issues) &nbsp;·&nbsp; [Request Feature](https://github.com/nadeem12-cloud/vidmind/issues)
+[Report Bug](https://github.com/nadeem12-cloud/vidmind/issues) &nbsp;·&nbsp; [Request Feature](https://github.com/nadeem12-cloud/vidmind/issues)
 
 ![VidMind Screenshot](assets/screenshot.png)
 
@@ -40,6 +40,15 @@ Built as part of a remote AI internship project at **Thinking Tech**, it demonst
 
 ---
 
+## ⚠️ Why Run Locally?
+
+> [!IMPORTANT]
+> YouTube actively blocks datacenter and cloud hosting IP ranges (such as Streamlit Community Cloud, Render, PythonAnywhere, AWS, and GCP). Attempting to scrape or download video streams from these platforms results in **403 Forbidden** errors.
+> 
+> Running VidMind **locally** resolves this issue entirely because it utilizes your home/office residential IP address, which YouTube accepts as standard, legitimate human traffic.
+
+---
+
 ## 🛠️ Tech Stack
 
 ```
@@ -47,7 +56,6 @@ Frontend      →  Streamlit (custom CSS — teal + cream theme)
 Audio         →  yt-dlp (YouTube audio download, no ffmpeg)
 Transcription →  Groq API — Whisper Large v3 Turbo
 Summarization →  Groq API — LLaMA 3.3 70B Versatile
-Deployment    →  Streamlit Cloud
 ```
 
 ---
@@ -74,55 +82,43 @@ vidmind/
 
 ---
 
-## 🚀 Local Setup
+## 🚀 Local Setup & Installation
 
-### 1. Clone the repo
+Follow these steps to run VidMind on your local machine:
+
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/nadeem12-cloud/vidmind.git
 cd vidmind
 ```
 
-### 2. Create virtual environment
+### 2. Create a Virtual Environment
 ```bash
 python -m venv venv
-source venv/bin/activate    # Windows: venv\Scripts\activate
 ```
+Activate it:
+* **Windows (PowerShell):** `.\venv\Scripts\Activate.ps1`
+* **Windows (Command Prompt):** `.\venv\Scripts\activate.bat`
+* **macOS / Linux:** `source venv/bin/activate`
 
-### 3. Install dependencies
+### 3. Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Get a free Groq API key
-1. Go to [console.groq.com](https://console.groq.com)
-2. Sign up with Google → **API Keys** → **Create API Key**
-3. Copy the key (starts with `gsk_...`)
+### 4. Set Up Groq API Keys
+1. Get a free API key by signing up at [console.groq.com](https://console.groq.com).
+2. Go to **API Keys** → **Create API Key** and copy the key (starts with `gsk_...`).
+3. In the root directory, create a `.streamlit` folder and add a `secrets.toml` file:
+   ```toml
+   GROQ_API_KEY = "your-gsk-api-key-here"
+   ```
 
-### 5. Add your API key
-Create `.streamlit/secrets.toml`:
-```toml
-GROQ_API_KEY = "gsk_..."
-```
-
-### 6. Run
+### 5. Launch the Application
 ```bash
 streamlit run app.py
 ```
-
-App opens at `http://localhost:8501` 🎉
-
----
-
-## ☁️ Deploy to Streamlit Cloud
-
-1. Push repo to GitHub (make sure `secrets.toml` is in `.gitignore`)
-2. Go to [share.streamlit.io](https://share.streamlit.io) → **New app**
-3. Select your repo → set main file to `app.py`
-4. **Advanced settings** → add secret:
-```toml
-GROQ_API_KEY = "gsk_..."
-```
-5. Click **Deploy** — live in ~2 minutes ✦
+Your default browser will automatically open to `http://localhost:8501`. 🎉
 
 ---
 

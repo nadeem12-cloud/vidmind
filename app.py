@@ -217,24 +217,6 @@ with col2:
         st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ── Cookies upload — fixes YouTube blocking cloud server IPs ─────────────────
-with st.expander("🍪  Cloud deployment? Avoid YouTube blocks (403 errors)"):
-    st.markdown("""
-When running in the cloud (like Streamlit Community Cloud), YouTube often blocks the server's IP address and returns a **403 Forbidden** error.
-
-**How to bypass this:**
-1. Install a browser extension like **Get cookies.txt LOCALLY** (Chrome/Edge) or **cookies.txt** (Firefox).
-2. Go to YouTube, log in, and export cookies as a text file.
-3. Upload the exported `cookies.txt` file below.
-""")
-    cookies_file = st.file_uploader("Upload cookies.txt", type=["txt"], label_visibility="collapsed")
-
-cookies_path = None
-if cookies_file is not None:
-    cookies_path = os.path.join(tempfile.gettempdir(), "vidmind_cookies.txt")
-    with open(cookies_path, "wb") as f:
-        f.write(cookies_file.getvalue())
-
 # ── Processing ────────────────────────────────────────────────────────────────
 if analyze_btn and url:
     if "youtube.com" not in url and "youtu.be" not in url:
@@ -266,7 +248,7 @@ if analyze_btn and url:
         render_chips("download")
         try:
             with st.spinner("Fetching audio from YouTube..."):
-                audio_path, video_title, duration = download_audio(url, tmpdir, cookies_path)
+                audio_path, video_title, duration = download_audio(url, tmpdir)
             done.append("download")
             render_chips("transcribe")
             st.success(f"✓  **{video_title}** · {format_duration(duration)}")
