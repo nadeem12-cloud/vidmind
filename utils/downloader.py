@@ -27,7 +27,15 @@ def download_audio(url: str, output_dir: str, cookies_path: str = None) -> tuple
     output_dir = str(output_dir)
 
     # Probe metadata first (fast, no download)
-    meta_opts = {"quiet": False, "verbose": True, "no_warnings": False, "skip_download": True}
+    meta_opts = {
+        "quiet": False,
+        "verbose": True,
+        "no_warnings": False,
+        "skip_download": True,
+        "js_runtimes": {
+            "node": {}
+        }
+    }
     if cookies_path:
         meta_opts["cookiefile"] = cookies_path
 
@@ -54,6 +62,9 @@ def download_audio(url: str, output_dir: str, cookies_path: str = None) -> tuple
         "noplaylist": True,
         # Do NOT post-process — avoids any ffmpeg dependency
         "postprocessors": [],
+        "js_runtimes": {
+            "node": {}
+        }
     }
     if cookies_path:
         ydl_opts["cookiefile"] = cookies_path
