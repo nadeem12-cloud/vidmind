@@ -11,7 +11,7 @@
 
 [Report Bug](https://github.com/nadeem12-cloud/vidmind/issues) &nbsp;·&nbsp; [Request Feature](https://github.com/nadeem12-cloud/vidmind/issues)
 
-![VidMind Screenshot](assets/screenshot.png)
+![VidMind Screenshot](assets/ss_1.png)
 
 </div>
 
