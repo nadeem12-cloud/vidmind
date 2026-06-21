@@ -11,8 +11,6 @@
 
 [Report Bug](https://github.com/nadeem12-cloud/vidmind/issues) &nbsp;·&nbsp; [Request Feature](https://github.com/nadeem12-cloud/vidmind/issues)
 
-![VidMind Screenshot](assests/ss_1.png)
-
 </div>
 
 ---
@@ -22,6 +20,16 @@
 VidMind is a Generative AI-powered video summarizer that takes any YouTube URL and delivers a clean, structured breakdown in seconds — no manual note-taking, no scrubbing through long videos.
 
 Built as part of a remote AI internship project at **Thinking Tech**, it demonstrates a complete end-to-end AI pipeline: audio extraction → speech-to-text transcription → LLM-powered summarization — all wrapped in a clean Streamlit interface.
+
+---
+
+## 📸 Screenshots
+
+| | |
+|---|---|
+| ![](assests/ss_1.png) | ![](assests/ss_2.png) |
+| ![](assests/ss_3.png) | ![](assests/ss_4.png) |
+| ![](assests/ss_5.png) | ![](assests/ss_6.png) |
 
 ---
 
@@ -44,7 +52,7 @@ Built as part of a remote AI internship project at **Thinking Tech**, it demonst
 
 > [!IMPORTANT]
 > YouTube actively blocks datacenter and cloud hosting IP ranges (such as Streamlit Community Cloud, Render, PythonAnywhere, AWS, and GCP). Attempting to scrape or download video streams from these platforms results in **403 Forbidden** errors.
-> 
+>
 > Running VidMind **locally** resolves this issue entirely because it utilizes your home/office residential IP address, which YouTube accepts as standard, legitimate human traffic.
 
 ---
@@ -68,8 +76,13 @@ vidmind/
 ├── requirements.txt
 ├── .gitignore
 ├── README.md
-├── assets/
-│   └── screenshot.png        # UI screenshot
+├── assests/
+│   ├── ss_1.png
+│   ├── ss_2.png
+│   ├── ss_3.png
+│   ├── ss_4.png
+│   ├── ss_5.png
+│   └── ss_6.png
 ├── .streamlit/
 │   ├── config.toml           # Theme config
 │   └── secrets.toml          # API key (NOT committed)
